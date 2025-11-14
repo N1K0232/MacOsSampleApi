@@ -1,0 +1,6 @@
+@MacOsSampleApi_HostAddress = http://localhost:5133
+
+GET {{MacOsSampleApi_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
