@@ -13,4 +13,8 @@
     <PackageReference Include="TinyHelpers.AspNetCore.Swashbuckle" Version="4.0.30" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\MacOsSampleApi.BusinessLayer\MacOsSampleApi.BusinessLayer.csproj" />
+  </ItemGroup>
+
 </Project>

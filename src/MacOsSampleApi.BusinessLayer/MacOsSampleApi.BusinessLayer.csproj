@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+</PropertyGroup>
+
+<ItemGroup>
+    <ProjectReference Include="..\MacOsSampleApi.DataAccessLayer\MacOsSampleApi.DataAccessLayer.csproj" />
+    <ProjectReference Include="..\MacOsSampleApi.Shared\MacOsSampleApi.Shared.csproj" />
+</ItemGroup>
+
+<ItemGroup>
+    <PackageReference Include="TinyHelpers" Version="3.3.9" />
+</ItemGroup>
+
+</Project>
