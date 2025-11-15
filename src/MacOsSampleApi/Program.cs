@@ -1,8 +1,21 @@
 using System.Net;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using FluentValidation;
 using TinyHelpers.AspNetCore.Extensions;
 using MacOsSampleApi.BusinessLayer.Settings;
 using TinyHelpers.AspNetCore.OpenApi;
 using MacOsSampleApi.Swagger;
+using Microsoft.EntityFrameworkCore;
+using MacOsSampleApi.DataAccessLayer;
+using MacOsSampleApi.BusinessLayer.Services;
+using MacOsSampleApi.BusinessLayer.Services.Interfaces;
+using MacOsSampleApi.BusinessLayer.Validations;
+using MinimalHelpers.Routing;
+using MinimalHelpers.Validation;
+using OperationResults.AspNetCore.Http;
+using ResultErrorResponseFormat = OperationResults.AspNetCore.Http.ErrorResponseFormat;
+using ValidationErrorResponseFormat = MinimalHelpers.Validation.ErrorResponseFormat;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,6 +28,24 @@ builder.Services.AddRequestLocalization(settings.SupportedCultures);
 builder.Services.AddDefaultProblemDetails();
 builder.Services.AddDefaultExceptionHandler();
 
+builder.Services.ConfigureHttpJsonOptions(options =>
+{
+    options.SerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingDefault;
+    options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
+});
+
+builder.Services.AddOperationResult(options => 
+{
+    options.ErrorResponseFormat = ResultErrorResponseFormat.List;
+});
+
+builder.Services.ConfigureValidation(options =>
+{
+    options.ErrorResponseFormat = ValidationErrorResponseFormat.List;
+});
+
+builder.Services.AddValidatorsFromAssemblyContaining<SavePersonRequestValidator>();
+
 if(swagger.IsEnabled)
 {
     builder.Services.AddOpenApi(options => 
@@ -24,6 +55,13 @@ if(swagger.IsEnabled)
         options.AddDefaultProblemDetailsResponse();
     });
 }
+
+builder.Services.AddDbContext<ApplicationDbContext>(options => 
+{
+    options.UseInMemoryDatabase("application");
+});
+
+builder.Services.AddScoped<IPeopleService, PeopleService>();
 
 var app = builder.Build();
 app.UseHttpsRedirection();
@@ -41,6 +79,5 @@ if(swagger.IsEnabled)
     });
 }
 
-app.MapPost("/api/ping", () => TypedResults.Ok(new { message = "pong"}));
-
+app.MapEndpoints();
 app.Run();

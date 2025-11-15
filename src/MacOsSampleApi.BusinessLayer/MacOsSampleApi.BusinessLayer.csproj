@@ -12,6 +12,8 @@
 
 <ItemGroup>
     <PackageReference Include="TinyHelpers" Version="3.3.9" />
+    <PackageReference Include="OperationResultTools" Version="1.0.33" />
+    <PackageReference Include="FluentValidation" Version="12.1.0" />
 </ItemGroup>
 
 </Project>
