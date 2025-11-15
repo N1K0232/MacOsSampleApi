@@ -4,6 +4,7 @@ using MacOsSampleApi.Shared.Models;
 using MacOsSampleApi.Shared.Models.Requests;
 using MacOsSampleApi.BusinessLayer.Services.Interfaces;
 using MinimalHelpers.FluentValidation;
+using OperationResults;
 
 namespace MacOsSampleApi.Endpoints;
 
@@ -24,7 +25,8 @@ public class PeopleEndpoint : IEndpointRouteHandlerBuilder
             .WithName("GetPerson");
 
         peopleApiGroup.MapGet(string.Empty, GetListAsync)
-            .Produces<IEnumerable<Person>>()
+            .Produces<PaginatedList<Person>>()
+            .Produces(StatusCodes.Status400BadRequest)
             .WithName("GetPeople");
 
         peopleApiGroup.MapPut("{id:guid}", UpdateAsync)
@@ -51,9 +53,9 @@ public class PeopleEndpoint : IEndpointRouteHandlerBuilder
         return httpContext.CreateResponse(result);
     }
 
-    private static async Task<IResult> GetListAsync(IPeopleService peopleService, HttpContext httpContext, string? searchText = null)
+    private static async Task<IResult> GetListAsync(IPeopleService peopleService, HttpContext httpContext, string? searchText = null, int pageIndex = 0, int itemsPerPage = 10, string orderBy = "FirstName, LastName")
     {
-        var result = await peopleService.GetListAsync(searchText, httpContext.RequestAborted);
+        var result = await peopleService.GetListAsync(searchText, pageIndex, itemsPerPage, orderBy, httpContext.RequestAborted);
         return httpContext.CreateResponse(result);
     }
 

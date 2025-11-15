@@ -4,6 +4,8 @@ using System.Linq.Expressions;
 using System.ComponentModel;
 using System;
 using System.Data;
+using System.Linq.Dynamic.Core;
+using System.Linq.Dynamic.Core.Exceptions;
 using System.Net.Cache;
 using System.Collections.Concurrent;
 using System.Security.Cryptography;
@@ -49,13 +51,25 @@ public class PeopleService(ApplicationDbContext db) : IPeopleService
         return person;
     }
     
-    public async Task<Result<IEnumerable<Person>>> GetListAsync(string? searchText, CancellationToken cancellationToken)
+    public async Task<Result<PaginatedList<Person>>> GetListAsync(string? searchText, int pageIndex, int itemsPerPage, string orderBy, CancellationToken cancellationToken)
     {
-        var people = await db.People.AsNoTracking().WhereIf(searchText.HasValue(), p => p.FirstName.Contains(searchText!) || p.LastName.Contains(searchText!))
-            .Select(p => new Person(p.Id, p.FirstName, p.LastName))
-            .ToListAsync(cancellationToken);
+        var query = db.People.AsNoTracking().WhereIf(searchText.HasValue(), p => p.FirstName.Contains(searchText!) || p.LastName.Contains(searchText!));
+        var totalCount = await query.CountAsync(cancellationToken);
 
-        return people;
+        try
+        {
+            query = query.OrderBy(orderBy);
+        }
+        catch (ParseException ex)
+        {
+            return Result.Fail(FailureReasons.ClientError, "Unable to order", ex.Message);
+        }
+
+        var dbPeople = await query.Skip(pageIndex * itemsPerPage).Take(itemsPerPage + 1).ToListAsync(cancellationToken);
+        var people = dbPeople.Take(itemsPerPage).Select(p => new Person(p.Id, p.FirstName, p.LastName));
+
+        var list = new PaginatedList<Person>(people, totalCount, dbPeople.Count > itemsPerPage);
+        return list;
     }
 
     public async Task<Result> UpdateAsync(Guid id, SavePersonRequest request, CancellationToken cancellationToken)

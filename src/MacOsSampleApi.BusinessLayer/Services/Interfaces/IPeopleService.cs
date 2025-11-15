@@ -14,7 +14,7 @@ public interface IPeopleService
 
     Task<Result<Person>> GetAsync(Guid id, CancellationToken cancellationToken);
 
-    Task<Result<IEnumerable<Person>>> GetListAsync(string? searchText, CancellationToken cancellationToken);
+    Task<Result<PaginatedList<Person>>> GetListAsync(string? searchText, int pageIndex, int itemsPerPage, string orderBy, CancellationToken cancellationToken);
 
     Task<Result> UpdateAsync(Guid id, SavePersonRequest request, CancellationToken cancellationToken);
 
