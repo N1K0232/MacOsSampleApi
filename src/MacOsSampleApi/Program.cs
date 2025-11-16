@@ -61,6 +61,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseInMemoryDatabase("application");
 });
 
+builder.Services.AddScoped<ICityService, CityService>();
 builder.Services.AddScoped<IPeopleService, PeopleService>();
 
 var app = builder.Build();

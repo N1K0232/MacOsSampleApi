@@ -28,6 +28,7 @@ public class PeopleService(ApplicationDbContext db) : IPeopleService
     {
         var dbPerson = new Entities.Person
         {
+            CityId = request.CityId,
             FirstName = request.FirstName,
             LastName = request.LastName
         };
@@ -35,25 +36,31 @@ public class PeopleService(ApplicationDbContext db) : IPeopleService
         await db.People.AddAsync(dbPerson, cancellationToken);
         await db.SaveChangesAsync(true, cancellationToken);
 
-        var createdPerson = new Person(dbPerson.Id, dbPerson.FirstName, dbPerson.LastName);
+        var createdPerson = new Person(dbPerson.Id, dbPerson.FirstName, dbPerson.LastName, dbPerson.City?.Name);
         return createdPerson;
     }
 
     public async Task<Result<Person>> GetAsync(Guid id, CancellationToken cancellationToken)
     {
-        var dbPerson = await db.People.AsNoTracking().FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
+        var dbPerson = await db.People.AsNoTracking()
+            .Include(p => p.City)
+            .FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
+        
         if (dbPerson is null)
         {
             return Result.Fail(FailureReasons.ItemNotFound, "Person not found", $"Person not found with id {id}");
         }
 
-        var person = new Person(dbPerson.Id, dbPerson.FirstName, dbPerson.LastName);
+        var person = new Person(dbPerson.Id, dbPerson.FirstName, dbPerson.LastName, dbPerson.City.Name);
         return person;
     }
     
     public async Task<Result<PaginatedList<Person>>> GetListAsync(string? searchText, int pageIndex, int itemsPerPage, string orderBy, CancellationToken cancellationToken)
     {
-        var query = db.People.AsNoTracking().WhereIf(searchText.HasValue(), p => p.FirstName.Contains(searchText!) || p.LastName.Contains(searchText!));
+        var query = db.People.AsNoTracking()
+            .Include(p => p.City)
+            .WhereIf(searchText.HasValue(), p => p.FirstName.Contains(searchText!) || p.LastName.Contains(searchText!));
+        
         var totalCount = await query.CountAsync(cancellationToken);
 
         try
@@ -66,7 +73,7 @@ public class PeopleService(ApplicationDbContext db) : IPeopleService
         }
 
         var dbPeople = await query.Skip(pageIndex * itemsPerPage).Take(itemsPerPage + 1).ToListAsync(cancellationToken);
-        var people = dbPeople.Take(itemsPerPage).Select(p => new Person(p.Id, p.FirstName, p.LastName));
+        var people = dbPeople.Take(itemsPerPage).Select(p => new Person(p.Id, p.FirstName, p.LastName, p.City.Name));
 
         var list = new PaginatedList<Person>(people, totalCount, dbPeople.Count > itemsPerPage);
         return list;
@@ -80,6 +87,7 @@ public class PeopleService(ApplicationDbContext db) : IPeopleService
             return Result.Fail(FailureReasons.ItemNotFound, "Person not found", $"Person not found with id {id}");
         }
 
+        person.CityId = request.CityId;
         person.FirstName = request.FirstName;
         person.LastName = request.LastName;
 
