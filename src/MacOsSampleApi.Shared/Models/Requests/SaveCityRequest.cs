@@ -5,4 +5,4 @@ using System.Threading.Tasks;
 
 namespace MacOsSampleApi.Shared.Models.Requests;
 
-public record class SavePersonRequest(Guid CityId, string FirstName, string LastName);
+public record class SaveCityRequest(string Name);
